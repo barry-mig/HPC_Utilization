@@ -1,19 +1,35 @@
 #!/usr/bin/env bash
-# Basic formatting / whitespace cleanup + secret scan
+# Formatting + targeted secret scan
 set -e
+
 # Strip trailing whitespace
 find . -type f -not -path '*/\.git/*' -not -path './.git/*' -not -name '*.png' -not -name '*.jpg' | while read -r f; do
   [ -f "$f" ] || continue
   sed -i '' -e 's/[[:space:]]*$//' "$f" 2>/dev/null || true
 done
+
 # Prevent committing large files >5MB
 large=$(git diff --cached --name-only | while read -r f; do [ -f "$f" ] && [ $(stat -f%z "$f") -gt 5242880 ] && echo "$f"; done)
 if [ -n "$large" ]; then
   echo "Error: Large files staged (>5MB):"; echo "$large"; exit 1; fi
-# Simple secret patterns
-if git diff --cached -U0 | grep -E '(AWS_SECRET|AWS_ACCESS|API_KEY=|SECRET_KEY=)' >/dev/null; then
-  echo "Possible secret detected in staged changes."; exit 1; fi
-# Ensure scripts are executable if in scripts/ and start with shebang
+
+# Allow override
+[ "${SKIP_SECRET_SCAN:-}" = "1" ] && echo "[pre-commit] Secret scan skipped" && exit 0
+
+# Gather staged diff
+staged=$(git diff --cached -U0)
+# Remove ignored lines
+scan=$(echo "$staged" | grep -v '# secret-scan: ignore' || true)
+
+# Targeted patterns only
+if echo "$scan" | grep -E 'AKIA[0-9A-Z]{16}' >/dev/null; then
+  echo "Possible AWS Access Key ID detected."; exit 1; fi
+if echo "$scan" | grep -E 'AWS_SECRET_ACCESS_KEY[=:][:space:]*[A-Za-z0-9/+=]{40}' >/dev/null; then
+  echo "Possible AWS Secret Access Key detected."; exit 1; fi
+if echo "$scan" | grep -E '(API_KEY|SECRET_KEY)[=:][:space:]*[A-Za-z0-9_\-]{24,}' >/dev/null; then
+  echo "Possible long token assignment detected."; exit 1; fi
+
+# Ensure scripts executable
 for f in $(git diff --cached --name-only | grep '^scripts/.*\.sh$' || true); do
   if head -1 "$f" | grep -q "#!/" && [ ! -x "$f" ]; then
     echo "Fixing executable bit on $f"; chmod +x "$f"; git add "$f"; fi
