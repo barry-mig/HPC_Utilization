@@ -2,3 +2,11 @@
 # Block push if there are unstaged changes (safety)
 if ! git diff --quiet; then
   echo "Unstaged changes present. Commit before pushing."; exit 1; fi
+# Secret scan diff against origin/main (if exists)
+if git rev-parse --verify origin/main >/dev/null 2>&1; then
+  base=origin/main
+else
+  base=HEAD~1
+fi
+if git diff $base..HEAD | grep -E '(AWS_SECRET|AWS_ACCESS|API_KEY=|SECRET_KEY=)' >/dev/null; then
+  echo "Possible secret detected in commits being pushed."; exit 1; fi
