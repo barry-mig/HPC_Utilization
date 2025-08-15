@@ -4,6 +4,20 @@
 # Override interval: INTERVAL=30 ./auto_push.sh
 set -euo pipefail
 
+# Move to script directory (repo root if script stored there)
+script_dir="$(cd -- "$(dirname "$0")" && pwd)"
+cd "$script_dir"
+
+# Basic logging setup (append). Override with LOG_FILE env var.
+LOG_FILE="${LOG_FILE:-auto_push.log}"
+# Prevent double redirection if already redirected (simple check)
+if [ -z "${AUTO_PUSH_LOGGED:-}" ]; then
+  export AUTO_PUSH_LOGGED=1
+  # Redirect all subsequent stdout/stderr to log
+  exec >>"$LOG_FILE" 2>&1
+  echo "--- $(date -u) : auto_push.sh started (PID $$) ---"
+fi
+
 required_name="barry-mig"
 required_email="70722391+barry-mig@users.noreply.github.com"
 current_name="$(git config user.name 2>/dev/null || true)"

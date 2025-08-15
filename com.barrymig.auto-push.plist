@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+ <dict>
+  <key>Label</key><string>com.barrymig.auto-push</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/bin/zsh</string>
+    <string>-c</string>
+    <string>cd /Users/cleme/Developer/HPC_Utilization && INTERVAL=300 ./auto_push.sh</string>
+  </array>
+  <key>RunAtLoad</key><true/>
+  <key>KeepAlive</key><true/>
+  <key>StandardOutPath</key><string>/Users/cleme/Developer/HPC_Utilization/auto_push.log</string>
+  <key>StandardErrorPath</key><string>/Users/cleme/Developer/HPC_Utilization/auto_push.err</string>
+ </dict>
+</plist>
