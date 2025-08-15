@@ -1,0 +1,12 @@
+# Logs
+*.log
+*.err
+# PID files
+*.pid
+# macOS
+.DS_Store
+# Temp
+.auto_stop
+# Node / Python (future expansion)
+node_modules/
+__pycache__/

@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+# Block push if there are unstaged changes (safety)
+if ! git diff --quiet; then
+  echo "Unstaged changes present. Commit before pushing."; exit 1; fi

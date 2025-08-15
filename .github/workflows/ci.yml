@@ -1,0 +1,25 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Show git log
+        run: |
+          git --no-pager log --oneline -n 5
+      - name: Basic shell lint (bashate substitute)
+        run: |
+          echo "Checking shell scripts"; grep -R "#!/usr/bin/env bash" -l || true
+      - name: Conventional commit check (last commit)
+        run: |
+          msg=$(git log -1 --pretty=%s)
+          echo "Commit msg: $msg"
+          if ! echo "$msg" | grep -Eq '^(feat|fix|chore|docs|refactor|test|ci|perf|style)(\(|: )'; then
+            echo "Warning: commit message not conventional"; fi

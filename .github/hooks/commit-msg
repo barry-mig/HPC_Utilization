@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+msg_file="$1"
+msg="$(cat "$msg_file")"
+if ! echo "$msg" | grep -Eq '^(feat|fix|chore|docs|refactor|test|ci|perf|style)(\(|: )'; then
+  echo "Warning: Commit message not conventional (continuing)"
+fi

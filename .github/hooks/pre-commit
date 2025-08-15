@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+# Basic formatting / whitespace cleanup
+set -e
+# Strip trailing whitespace
+find . -type f -not -path '*/\.git/*' -not -path './.git/*' -not -name '*.png' -not -name '*.jpg' | while read -r f; do
+  [ -f "$f" ] || continue
+  sed -i '' -e 's/[[:space:]]*$//' "$f" 2>/dev/null || true
+done
+# Prevent committing large files >5MB
+large=$(git diff --cached --name-only | while read -r f; do [ -f "$f" ] && [ $(stat -f%z "$f") -gt 5242880 ] && echo "$f"; done)
+if [ -n "$large" ]; then
+  echo "Error: Large files staged (>5MB):"; echo "$large"; exit 1; fi
