@@ -5,7 +5,7 @@ set -euo pipefail
 
 # Ensure correct identity (uses local repo config; change to --global if desired)
 required_name="barry-mig"
-required_email="barrymigott@gmail.com"
+required_email="70722391+barry-mig@users.noreply.github.com"
 current_name="$(git config user.name 2>/dev/null || true)"
 current_email="$(git config user.email 2>/dev/null || true)"
 if [ "$current_name" != "$required_name" ]; then
