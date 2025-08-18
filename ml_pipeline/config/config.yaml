@@ -1,0 +1,62 @@
+# Customer Churn Prediction Configuration
+
+# Data sources
+data_sources:
+  customer_demographics: "data/raw/customer_demographics.csv"
+  transaction_history: "data/raw/transactions.csv"
+  support_tickets: "data/raw/support_tickets.csv"
+  product_usage: "data/raw/product_usage.csv"
+
+# Feature engineering
+features:
+  numerical:
+    - "age"
+    - "tenure_months"
+    - "monthly_charges"
+    - "total_charges"
+    - "avg_monthly_usage"
+  categorical:
+    - "contract_type"
+    - "payment_method"
+    - "internet_service"
+    - "gender"
+  derived:
+    - "charges_per_month_ratio"
+    - "support_tickets_per_month"
+    - "usage_trend"
+
+# Model configuration
+models:
+  random_forest:
+    n_estimators: 100
+    max_depth: 10
+    random_state: 42
+  xgboost:
+    n_estimators: 100
+    max_depth: 6
+    learning_rate: 0.1
+    random_state: 42
+  neural_network:
+    hidden_layers: [128, 64, 32]
+    dropout: 0.3
+    epochs: 100
+    batch_size: 32
+
+# Training
+training:
+  test_size: 0.2
+  validation_size: 0.2
+  cross_validation_folds: 5
+  random_state: 42
+
+# API
+api:
+  host: "0.0.0.0"
+  port: 8000
+  model_path: "models/best_model.pkl"
+
+# Monitoring
+monitoring:
+  model_drift_threshold: 0.05
+  performance_threshold: 0.8
+  retrain_schedule: "weekly"
