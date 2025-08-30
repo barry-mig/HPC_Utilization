@@ -1,0 +1,114 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: workload-predictor
+  namespace: hpc-system
+  labels:
+    app: workload-predictor
+    tier: ml-service
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: workload-predictor
+  template:
+    metadata:
+      labels:
+        app: workload-predictor
+        tier: ml-service
+    spec:
+      containers:
+      - name: workload-predictor
+        image: hpc-utilization/workload-predictor:latest
+        ports:
+        - containerPort: 8000
+        env:
+        - name: PORT
+          value: "8000"
+        - name: ENVIRONMENT
+          value: "production"
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+        securityContext:
+          runAsNonRoot: true
+          runAsUser: 1000
+          readOnlyRootFilesystem: true
+          allowPrivilegeEscalation: false
+        volumeMounts:
+        - name: tmp
+          mountPath: /tmp
+        - name: models
+          mountPath: /app/models
+          readOnly: true
+      volumes:
+      - name: tmp
+        emptyDir: {}
+      - name: models
+        configMap:
+          name: ml-models-config
+      restartPolicy: Always
+      serviceAccountName: hpc-service-account
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: workload-predictor-service
+  namespace: hpc-system
+  labels:
+    app: workload-predictor
+spec:
+  selector:
+    app: workload-predictor
+  ports:
+  - protocol: TCP
+    port: 8000
+    targetPort: 8000
+    name: http
+  type: ClusterIP
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: workload-predictor-hpa
+  namespace: hpc-system
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: workload-predictor
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80
