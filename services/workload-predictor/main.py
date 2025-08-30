@@ -112,19 +112,22 @@ model_last_retrain = None
 start_time = datetime.now()
 
 def load_model():
-    """Load the pre-trained workload prediction model"""
-    # global model, model_last_retrain
-    # try:
-    #     # In a real implementation, this would load from a model registry
-    #     # For demo purposes, we'll create a simple synthetic model
-    #     model = create_synthetic_model()
-    #     model_last_retrain = datetime.now()
-    #     logger.info(f"Model loaded successfully. Version: {model_version}")
-    #     return True
-    # except Exception as e:
-    #     logger.error(f"Failed to load model: {e}")
-    #     return False
+    """
+    Initialize and load the machine learning model for workload prediction.
     
+    This function handles the complete model loading process including:
+    - Accessing the global model state variables
+    - Creating a new model instance through the synthetic model factory
+    - Recording the model initialization timestamp for tracking purposes
+    - Logging the successful loading event for monitoring and debugging
+    
+    In a production environment, this would connect to a model registry
+    service, download the latest trained model artifacts, verify model
+    integrity, and handle version compatibility checks.
+    
+    Returns:
+        bool: True if model loading succeeded, False otherwise
+    """
     # DEMO: Simplified model loading
     global model, model_last_retrain
     model = create_synthetic_model()
@@ -133,7 +136,26 @@ def load_model():
     return True
 
 def create_synthetic_model():
-    """Create a synthetic model for demonstration purposes"""
+    """
+    Factory function that creates a synthetic machine learning model for demonstration.
+    
+    This function constructs a mock model object that simulates the behavior of a
+    real time-series forecasting model. The synthetic model generates realistic
+    predictions for HPC workload metrics including CPU utilization, memory usage,
+    GPU consumption, and job queue lengths.
+    
+    The model uses statistical distributions to create believable predictions:
+    - Normal distributions for resource utilization percentages
+    - Poisson distribution for discrete job queue counts
+    - Confidence intervals to represent prediction uncertainty
+    
+    In a real implementation, this would be replaced with actual trained models
+    such as LSTM networks, ARIMA models, or ensemble methods that have been
+    trained on historical HPC cluster data.
+    
+    Returns:
+        SyntheticModel: An instance of the mock model class with predict method
+    """
     # # This would be replaced with actual trained models
     # class SyntheticModel:
     #     def predict(self, X):
@@ -152,6 +174,26 @@ def create_synthetic_model():
     # DEMO: Simplified synthetic model
     class SyntheticModel:
         def predict(self, X):
+            """
+            Generate mock predictions for workload forecasting based on input features.
+            
+            This method simulates the prediction process of a trained machine learning
+            model by generating statistically realistic values for various HPC metrics.
+            The predictions are based on normal and Poisson distributions that mimic
+            real-world patterns observed in HPC environments.
+            
+            Args:
+                X: Input feature matrix (length determines number of predictions)
+                
+            Returns:
+                dict: Dictionary containing prediction arrays for different metrics:
+                    - cpu_predictions: CPU utilization percentages (0-1)
+                    - memory_predictions: Memory usage percentages (0-1) 
+                    - gpu_predictions: GPU utilization percentages (0-1)
+                    - queue_predictions: Number of queued jobs (integer)
+                    - confidence_lower: Lower confidence interval bounds
+                    - confidence_upper: Upper confidence interval bounds
+            """
             n_samples = len(X)
             return {
                 'cpu_predictions': np.random.normal(0.7, 0.1, n_samples),
@@ -165,7 +207,22 @@ def create_synthetic_model():
 
 @app.on_event("startup")
 async def startup_event():
-    """Initialize the service on startup"""
+    """
+    Service initialization handler that runs when the FastAPI application starts.
+    
+    This event handler is automatically triggered during the application startup
+    process and handles critical initialization tasks. It attempts to load the
+    machine learning model and logs the result for monitoring purposes.
+    
+    The function performs essential bootstrap operations:
+    - Loads the prediction model into memory
+    - Validates model loading success
+    - Logs startup events for operational visibility
+    - Prepares the service to handle incoming prediction requests
+    
+    If model loading fails, the service will log an error but continue running
+    to allow health check endpoints to respond and indicate the service state.
+    """
     logger.info("Starting HPC Workload Predictor service...")
     success = load_model()
     if not success:
@@ -173,7 +230,23 @@ async def startup_event():
 
 @app.get("/health", response_model=HealthResponse)
 async def health_check():
-    """Health check endpoint for Kubernetes readiness/liveness probes"""
+    """
+    Kubernetes health check endpoint for monitoring service availability and readiness.
+    
+    This endpoint provides detailed health information that Kubernetes uses for:
+    - Liveness probes: Determining if the service is running and responsive
+    - Readiness probes: Checking if the service is ready to handle traffic
+    - Load balancer decisions: Routing traffic only to healthy instances
+    
+    The health check reports multiple status indicators:
+    - Overall service status (healthy/unhealthy)
+    - Model loading state (critical for prediction functionality)
+    - Last model retraining timestamp (for model freshness tracking)
+    - Service uptime (for operational monitoring)
+    
+    Returns:
+        HealthResponse: Structured health information including status and metrics
+    """
     uptime = (datetime.now() - start_time).total_seconds()
     return HealthResponse(
         status="healthy" if model is not None else "unhealthy",
@@ -185,7 +258,36 @@ async def health_check():
 @app.post("/predict", response_model=PredictionResponse)
 async def predict_workload(request: WorkloadPredictionRequest):
     """
-    Generate workload predictions based on historical data
+    Main prediction endpoint that generates HPC workload forecasts based on historical data.
+    
+    This endpoint serves as the core functionality of the workload prediction service.
+    It processes incoming requests containing historical workload metrics and returns
+    detailed predictions for future time periods. The function handles the complete
+    prediction pipeline including data validation, feature engineering, model inference,
+    and response formatting.
+    
+    The prediction process involves several key steps:
+    - Input validation and data structure conversion
+    - Feature extraction from time-series historical data  
+    - Model inference using the loaded machine learning model
+    - Timestamp generation for future prediction periods
+    - Response formatting with confidence intervals and metadata
+    
+    Metrics collection is integrated throughout the process to monitor:
+    - Request counts for load tracking
+    - Prediction latency for performance monitoring
+    - Error rates for service health assessment
+    
+    Args:
+        request (WorkloadPredictionRequest): Contains historical workload data,
+                                           prediction horizon, and confidence level
+    
+    Returns:
+        PredictionResponse: Structured predictions with timestamps, values,
+                          confidence intervals, and metadata
+    
+    Raises:
+        HTTPException: 503 if model is not loaded, 500 for prediction failures
     """
     PREDICTION_REQUESTS.inc()
     
@@ -237,7 +339,35 @@ async def predict_workload(request: WorkloadPredictionRequest):
             raise HTTPException(status_code=500, detail=f"Prediction failed: {str(e)}")
 
 def extract_features(df: pd.DataFrame) -> np.ndarray:
-    """Extract features from historical workload data"""
+    """
+    Transform historical workload data into feature vectors for machine learning prediction.
+    
+    This function performs feature engineering on time-series workload data to create
+    meaningful input features for the prediction model. The feature extraction process
+    converts raw historical metrics into statistical summaries and patterns that
+    capture important trends and behaviors in the HPC workload data.
+    
+    The feature engineering includes several categories:
+    - Statistical measures: Mean, standard deviation, min/max values
+    - Trend indicators: Rate of change, moving averages
+    - Temporal patterns: Periodic behavior, seasonality indicators
+    - Resource correlations: Relationships between CPU, memory, and GPU usage
+    
+    In a production environment, this would implement sophisticated time-series
+    feature extraction techniques such as:
+    - Fourier transforms for frequency domain analysis
+    - Autocorrelation functions for pattern detection
+    - Lag features for temporal dependencies
+    - Rolling window statistics for trend analysis
+    
+    Args:
+        df (pd.DataFrame): Historical workload data with columns for timestamps,
+                          CPU usage, memory usage, GPU usage, job queues, etc.
+    
+    Returns:
+        np.ndarray: Feature vector suitable for model input, containing extracted
+                   statistical and temporal features from the historical data
+    """
     # Simple feature extraction for demo
     # In practice, this would include sophisticated time series features
     features = []

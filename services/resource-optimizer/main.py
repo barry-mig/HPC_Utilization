@@ -109,9 +109,29 @@ class OptimizationSolution:
     power_consumption: float
 
 class ResourceOptimizer:
-    """Advanced resource optimization engine"""
+    """
+    Advanced resource optimization engine for HPC cluster resource allocation.
+    
+    This class implements sophisticated algorithms for optimally assigning computational
+    jobs to cluster nodes while considering multiple constraints and objectives. The
+    optimizer supports various optimization strategies including efficiency maximization,
+    throughput optimization, power consumption minimization, and balanced approaches.
+    
+    The optimization engine handles complex multi-objective optimization problems by:
+    - Evaluating job-to-node assignment possibilities
+    - Considering resource constraints and availability
+    - Balancing competing objectives (performance vs power vs utilization)
+    - Generating allocation recommendations with timing estimates
+    """
     
     def __init__(self):
+        """
+        Initialize the resource optimizer with available optimization strategies.
+        
+        Sets up a mapping of optimization objectives to their corresponding
+        algorithm implementations. This design allows for easy extension
+        with additional optimization strategies in the future.
+        """
         self.optimization_methods = {
             "efficiency": self._optimize_for_efficiency,
             "throughput": self._optimize_for_throughput,
@@ -120,7 +140,28 @@ class ResourceOptimizer:
         }
     
     def optimize(self, request: OptimizationRequest) -> OptimizationResult:
-        """Main optimization entry point"""
+        """
+        Main optimization entry point that orchestrates the complete resource allocation process.
+        
+        This method serves as the primary interface for the optimization engine, handling
+        the entire workflow from request processing to result generation. It selects the
+        appropriate optimization algorithm based on the specified objective and coordinates
+        the optimization execution.
+        
+        The optimization process includes:
+        - Objective selection and algorithm mapping
+        - Optimization algorithm execution with timing measurement
+        - Solution post-processing and result formatting
+        - Performance metrics calculation and recommendations generation
+        
+        Args:
+            request (OptimizationRequest): Complete optimization request including jobs,
+                                         cluster nodes, constraints, and objectives
+        
+        Returns:
+            OptimizationResult: Comprehensive optimization solution with allocations,
+                              efficiency metrics, and operational recommendations
+        """
         start_time = datetime.now()
         
         # Choose optimization method based on objective
@@ -138,7 +179,31 @@ class ResourceOptimizer:
         return result
     
     def _optimize_for_efficiency(self, request: OptimizationRequest) -> OptimizationSolution:
-        """Optimize for maximum resource efficiency"""
+        """
+        Implement efficiency-focused optimization strategy for resource allocation.
+        
+        This optimization algorithm prioritizes maximum resource utilization efficiency
+        by finding job-to-node assignments that minimize resource waste and maximize
+        overall cluster utilization. The algorithm considers job priority levels and
+        estimated runtime to make intelligent allocation decisions.
+        
+        The efficiency optimization strategy:
+        - Prioritizes high-priority jobs for optimal resource assignment
+        - Minimizes resource fragmentation across cluster nodes
+        - Balances workload distribution to avoid hotspots
+        - Considers job runtime estimates for better scheduling decisions
+        
+        The algorithm uses a greedy approach with priority sorting to achieve good
+        efficiency results while maintaining reasonable computational complexity.
+        
+        Args:
+            request (OptimizationRequest): Optimization request containing jobs, nodes,
+                                         and constraints to consider during allocation
+        
+        Returns:
+            OptimizationSolution: Optimized allocation solution with efficiency metrics
+                                and resource utilization details
+        """
         jobs = request.jobs
         nodes = request.cluster_nodes
         

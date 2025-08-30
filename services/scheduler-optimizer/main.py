@@ -126,9 +126,37 @@ class SchedulingEvent:
     resources: Dict[str, Union[int, float]]
 
 class JobScheduler:
-    """Advanced HPC job scheduler with multiple scheduling policies"""
+    """
+    Advanced HPC job scheduler implementing multiple scheduling policies and algorithms.
+    
+    This class provides a comprehensive job scheduling system for High Performance Computing
+    environments, supporting various scheduling strategies to optimize cluster utilization,
+    job throughput, and user fairness. The scheduler handles complex job dependencies,
+    resource constraints, and user quotas while providing flexible policy selection.
+    
+    The scheduler supports multiple scheduling policies:
+    - FIFO: First In, First Out for simple queue processing
+    - SJF: Shortest Job First for minimizing average wait time
+    - Priority: Priority-based scheduling for critical workloads
+    - Fair Share: Proportional resource allocation among users
+    - Backfill: Aggressive scheduling with job reordering for efficiency
+    
+    Key features include:
+    - Dependency resolution for complex job workflows
+    - Resource reservation and allocation tracking
+    - User quota management and enforcement
+    - Real-time cluster utilization monitoring
+    - Performance metrics and scheduling efficiency analysis
+    """
     
     def __init__(self):
+        """
+        Initialize the job scheduler with all available scheduling policy implementations.
+        
+        Creates a mapping between scheduling policy types and their corresponding
+        algorithm implementations. This design allows for easy policy selection
+        and future extension with additional scheduling strategies.
+        """
         self.scheduling_policies = {
             SchedulingPolicy.FIFO: self._schedule_fifo,
             SchedulingPolicy.SJF: self._schedule_sjf,
@@ -138,7 +166,31 @@ class JobScheduler:
         }
     
     def schedule(self, request: SchedulingRequest) -> SchedulingResult:
-        """Main scheduling entry point"""
+        """
+        Main scheduling entry point that coordinates the complete job scheduling process.
+        
+        This method serves as the primary interface for the job scheduler, orchestrating
+        the entire scheduling workflow from request validation to result generation.
+        It handles policy selection, dependency validation, and coordinates the execution
+        of the chosen scheduling algorithm.
+        
+        The scheduling process includes several key phases:
+        - Job dependency validation to ensure scheduling feasibility
+        - Scheduling policy selection and algorithm execution
+        - Resource allocation and timeline generation
+        - Performance metrics calculation and result compilation
+        
+        The method ensures robust error handling and provides comprehensive scheduling
+        results including success metrics, unscheduled jobs, and cluster utilization data.
+        
+        Args:
+            request (SchedulingRequest): Complete scheduling request containing jobs,
+                                       cluster nodes, policy preference, and constraints
+        
+        Returns:
+            SchedulingResult: Comprehensive scheduling solution with job allocations,
+                            timing estimates, and cluster utilization metrics
+        """
         start_time = datetime.now()
         
         # Validate dependencies
