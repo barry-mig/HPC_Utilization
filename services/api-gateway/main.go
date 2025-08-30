@@ -27,21 +27,21 @@ import (
 	// "go.uber.org/zap"
 )
 
-// Service represents a backend service
+// Service represents a backend service configuration for the API gateway
 type Service struct {
-	Name     string `json:"name"`
-	URL      string `json:"url"`
-	Priority int    `json:"priority"`
-	Healthy  bool   `json:"healthy"`
-	Weight   int    `json:"weight"`
+	Name     string `json:"name"`     // Human-readable service identifier
+	URL      string `json:"url"`      // Complete service endpoint URL including protocol and port
+	Priority int    `json:"priority"` // Service priority for routing decisions (higher = preferred)
+	Healthy  bool   `json:"healthy"`  // Current health status from latest health check
+	Weight   int    `json:"weight"`   // Load balancing weight for request distribution
 }
 
-// HealthCheck represents health status
+// HealthCheck represents health monitoring data for backend services
 type HealthCheck struct {
-	Service   string    `json:"service"`
-	Status    string    `json:"status"`
-	Timestamp time.Time `json:"timestamp"`
-	Latency   int64     `json:"latency_ms"`
+	Service   string    `json:"service"`    // Service name being monitored
+	Status    string    `json:"status"`     // Current health status ("healthy" or "unhealthy")
+	Timestamp time.Time `json:"timestamp"`  // Time of last health check execution
+	Latency   int64     `json:"latency_ms"` // Response latency in milliseconds
 }
 
 // RequestMetrics for tracking
