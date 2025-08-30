@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Python
 __pycache__/
 *.py[cod]
@@ -101,3 +102,17 @@ credentials.json
 *.tfstate
 *.tfstate.*
 .terraform/
+=======
+# Logs
+*.log
+*.err
+# PID files
+*.pid
+# macOS
+.DS_Store
+# Temp
+.auto_stop
+# Node / Python (future expansion)
+node_modules/
+__pycache__/
+>>>>>>> 50c1c02b9a9b792c81079a775c932d810cd780ba

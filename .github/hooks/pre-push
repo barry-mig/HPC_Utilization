@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+# Block push if there are unstaged changes (safety)
+if ! git diff --quiet; then
+  echo "Unstaged changes present. Commit before pushing."; exit 1; fi
+
+# Allow override
+if [ "${SKIP_SECRET_SCAN:-}" = "1" ]; then
+  echo "[pre-push] Secret scan skipped via SKIP_SECRET_SCAN=1"
+  exit 0
+fi
+
+# Build diff base
+if git rev-parse --verify origin/main >/dev/null 2>&1; then
+  base=origin/main
+else
+  base=$(git rev-list --max-parents=0 HEAD | tail -1)
+fi
+
+diff_content=$(git diff "$base"..HEAD)
+
+# Remove lines explicitly ignored
+scan_content=$(echo "$diff_content" | grep -v '# secret-scan: ignore' || true)
+
+# Relaxed targeted patterns:
+# Very conservative patterns - only match actual secrets in non-comment lines
+# Skip lines with comments, echo statements, or grep patterns
+filtered_scan=$(echo "$scan_content" | grep -v -E '^[[:space:]]*#|echo|grep|\|' || true)
+
+# Only check for very specific patterns that are likely real secrets
+if echo "$filtered_scan" | grep -E '^[^#]*AKIA[0-9A-Z]{16}[^A-Z0-9]' >/dev/null; then
+  echo "Possible AWS Access Key detected. Abort."; exit 1; fi
+
+echo "[pre-push] Secret scan passed."

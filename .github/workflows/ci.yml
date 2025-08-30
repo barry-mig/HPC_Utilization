@@ -1,0 +1,54 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  schedule:
+    - cron: '0 3 * * *'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Show git log
+        run: |
+          git --no-pager log --oneline -n 5
+      - name: Basic shell lint (bashate substitute)
+        run: |
+          echo "Checking shell scripts"; grep -R "#!/usr/bin/env bash" -l || true
+      - name: Conventional commit check (last commit)
+        run: |
+          msg=$(git log -1 --pretty=%s)
+          echo "Commit msg: $msg"
+          if ! echo "$msg" | grep -Eq '^(feat|fix|chore|docs|refactor|test|ci|perf|style)(\(|: )'; then
+            echo "Warning: commit message not conventional"; fi
+      - name: Secret scan (simple regex)
+        run: |
+          echo "Scanning for potential secrets";
+          grep -R -n -E '(AWS_SECRET|AWS_ACCESS|API_KEY=|SECRET_KEY=)' . || echo "No obvious tokens"
+
+  codeql:
+    name: CodeQL Analysis
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+    strategy:
+      fail-fast: false
+      matrix:
+        language: [ 'javascript' ]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: ${{ matrix.language }}
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@v3
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3

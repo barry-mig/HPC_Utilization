@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+msg_file="$1"
+msg="$(cat "$msg_file")"
+pattern='^(feat|fix|chore|docs|refactor|test|ci|perf|style)(\([a-z0-9_-]+\))?: .{1,}'
+if ! echo "$msg" | grep -Eq "$pattern"; then
+  echo "Commit message not conventional (expected: type(scope): description)"; exit 1
+fi
