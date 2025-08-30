@@ -71,6 +71,29 @@ type APIGateway struct {
 }
 
 func NewAPIGateway() *APIGateway {
+	/*
+	Initialize and configure the API Gateway with all necessary components.
+	
+	This function creates a complete API Gateway instance with integrated monitoring,
+	load balancing, and service discovery capabilities. The initialization process
+	sets up all required components including metrics collection, health monitoring,
+	and routing configuration.
+	
+	Key initialization steps:
+	- Production-grade structured logging with Zap logger
+	- Prometheus metrics registration for observability
+	- Backend service configuration with environment variable support
+	- Load balancer setup with round-robin distribution
+	- Health check monitoring system initialization
+	- Gin router configuration with appropriate middleware
+	
+	The gateway supports environment-based configuration allowing flexible
+	deployment across different environments (development, staging, production)
+	without code changes.
+	
+	Returns:
+	    *APIGateway: Fully configured API Gateway instance ready to handle requests
+	*/
 	// Initialize logger
 	logger, _ := zap.NewProduction()
 
